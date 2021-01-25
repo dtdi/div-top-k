@@ -1,0 +1,32 @@
+{
+  "name": "div-top-k",
+  "version": "1.0.0",
+  "description": "diversifying Top-K Results",
+  "main": "index.js",
+  "module": "dist/index.esm.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "npm test -- --watch",
+    "test": "mocha -r @babel/register -r source-map-support/register --full-trace test/*.spec.js"
+  },
+  "author": "Tobias Fehrer",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-object-assign": "^7.12.1",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/register": "^7.12.10",
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1",
+    "npm-run-all": "^4.1.5",
+    "rollup": "^2.38.0",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-uglify": "^6.0.4",
+    "sinon": "^9.2.4",
+    "sinon-chai": "^3.5.0",
+    "source-map-support": "^0.5.19"
+  },
+  "dependencies": {
+    "min-dash": "^3.5.2"
+  }
+}

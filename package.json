@@ -6,7 +6,7 @@
   "module": "dist/index.esm.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "npm test -- --watch",
+    "dev": "npm test -- --watch --inspect",
     "test": "mocha -r @babel/register -r source-map-support/register --full-trace test/*.spec.js"
   },
   "author": "Tobias Fehrer",

@@ -1,5 +1,5 @@
 import { test } from "mocha";
-import { HeapE } from "../lib/tool/HeapE";
+import { HeapE } from "../lib";
 var expect = require("chai").expect;
 
 describe("HeapE", function () {

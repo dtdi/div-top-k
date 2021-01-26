@@ -1,5 +1,5 @@
 import { test } from "mocha";
-import { Graph } from "../lib/tool/Graph";
+import { Graph } from "../lib";
 var expect = require("chai").expect;
 
 describe("Graph", function () {

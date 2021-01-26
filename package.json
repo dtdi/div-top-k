@@ -1,11 +1,12 @@
 {
   "name": "div-top-k",
   "version": "1.0.0",
-  "description": "diversifying Top-K Results",
+  "description": "Diversifying Top-K Results",
   "main": "index.js",
   "module": "dist/index.esm.js",
   "scripts": {
-    "start": "node index.js",
+    "bundle": "rollup -c",
+    "lint": "eslint .",
     "dev": "npm test -- --watch --inspect",
     "test": "mocha -r @babel/register -r source-map-support/register --full-trace test/*.spec.js"
   },
@@ -17,6 +18,7 @@
     "@babel/preset-env": "^7.12.11",
     "@babel/register": "^7.12.10",
     "chai": "^4.2.0",
+    "eslint": "^5.6.1",
     "mocha": "^8.2.1",
     "npm-run-all": "^4.1.5",
     "rollup": "^2.38.0",

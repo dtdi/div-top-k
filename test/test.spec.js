@@ -1,4 +1,4 @@
-import { DivRstSet } from "../lib/tool/DivRstSet";
+import { DivRstSet } from "../lib";
 var expect = require("chai").expect;
 
 describe("DivRstSet", function () {

@@ -15,14 +15,14 @@ function pgl(plugins = []) {
   ];
 }
 
-const umdDist = "dist/min-dash.js";
+const umdDist = "dist/div-top-k.js";
 
 export default [
   // browser-friendly UMD build
   {
     input: "lib/index.js",
     output: {
-      name: "MinDash",
+      name: "DivTopK",
       file: umdDist,
       format: "umd",
     },
@@ -31,7 +31,7 @@ export default [
   {
     input: "lib/index.js",
     output: {
-      name: "MinDash",
+      name: "DivTopK",
       file: umdDist.replace(/\.js$/, ".min.js"),
       format: "umd",
     },

@@ -1,6 +1,5 @@
 import { test } from "mocha";
-import { div_astar } from "../lib/div_astar";
-import { Graph } from "../lib/tool/Graph";
+import { div_astar, Graph } from "../lib";
 var expect = require("chai").expect;
 
 describe("DivAStar", function () {

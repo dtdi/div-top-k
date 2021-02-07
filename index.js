@@ -91,7 +91,7 @@ var Graph = /*#__PURE__*/function () {
       chai.assert(!_this._dict[vid]);
       _this._dict[vid] = {
         val: score,
-        nei: _toConsumableArray(eTable[vid])
+        nei: new Set(eTable[vid])
       };
     });
     this.sort();
@@ -109,7 +109,7 @@ var Graph = /*#__PURE__*/function () {
       chai.assert(!this._dict[vid]);
       this._dict[vid] = {
         val: score,
-        nei: []
+        nei: new Set()
       };
       this.sort();
       return this;
@@ -121,9 +121,9 @@ var Graph = /*#__PURE__*/function () {
       chai.assert(!self._dict[vid1]["nei"][vid2]);
       chai.assert(!self._dict[vid2]["nei"][vid1]);
 
-      this._dict[vid1]["nei"].push(vid2);
+      this._dict[vid1]["nei"].add(vid2);
 
-      this._dict[vid2]["nei"].push(vid1);
+      this._dict[vid2]["nei"].add(vid1);
     }
   }, {
     key: "delV",
@@ -133,9 +133,11 @@ var Graph = /*#__PURE__*/function () {
       chai.assert(this._dict[vid]);
       var vDict = this._dict[vid];
       delete this._dict[vid];
-      minDash.forEach(vDict.nei, function (neiVid) {
-        _this2._dict[neiVid]["nei"] = minDash.without(_this2._dict[neiVid]["nei"], vid);
+
+      _toConsumableArray(vDict.nei).forEach(function (neiVid) {
+        _this2._dict[neiVid]["nei"]["delete"](vid);
       });
+
       this.sort();
       return vDict;
     }
@@ -143,8 +145,10 @@ var Graph = /*#__PURE__*/function () {
     key: "delE",
     value: function delE(vid1, vid2) {
       chai.assert(this._dict[vid1] && this._dict[vid2]);
-      this._dict[vid1]["nei"] = minDash.without(this._dict[vid1]["nei"], vid2);
-      this._dict[vid2]["nei"] = minDash.without(this._dict[vid1]["nei"], vid1);
+
+      this._dict[vid1]["nei"]["delete"](vid2);
+
+      this._dict[vid2]["nei"]["delete"](vid1);
     }
     /**
      *
@@ -162,9 +166,9 @@ var Graph = /*#__PURE__*/function () {
         chai.assert(!newD[vid] && _this3.hasV(vid));
         newD[vid] = {
           val: _this3.getValByV(vid),
-          nei: _this3.getNeiByV(vid).filter(function (value) {
+          nei: new Set(_toConsumableArray(_this3.getNeiByV(vid)).filter(function (value) {
             return vertice.includes(value);
-          })
+          }))
         };
       });
 
@@ -176,7 +180,9 @@ var Graph = /*#__PURE__*/function () {
   }, {
     key: "getVids",
     value: function getVids() {
-      return _toConsumableArray(new Set(Object.keys(this._dict)));
+      return new Set(Object.keys(this._dict).map(function (x) {
+        return parseInt(x);
+      }));
     }
   }, {
     key: "getVidByPos",
@@ -233,12 +239,149 @@ var Graph = /*#__PURE__*/function () {
       return Object.keys(this._dict).length;
     }
   }, {
+    key: "compress",
+    value: function compress() {
+      var _this4 = this;
+
+      var delVids = new Set();
+      var processedVids = new Set();
+      minDash.forEach(this._items, function (Dict) {
+        var vid = parseInt(Dict[0]);
+
+        if (!delVids.has(vid)) {
+          processedVids.add(vid);
+          var vConductG = [].concat(_toConsumableArray(_this4.getNeiByV(vid)), [vid]);
+
+          var diff = _toConsumableArray(Dict[1]["nei"]).filter(function (x) {
+            return !processedVids.has(x);
+          }).filter(function (x) {
+            return !delVids.has(x);
+          });
+
+          minDash.forEach(diff, function (neiVid) {
+            var neiVConductG = [].concat(_toConsumableArray(_this4.getNeiByV(neiVid)), [neiVid]);
+
+            if (vConductG.every(function (val) {
+              return neiVConductG.includes(val);
+            })) {
+              delVids.add(neiVid);
+            }
+          });
+        }
+      });
+
+      _toConsumableArray(delVids).forEach(function (vid) {
+        _this4.delV(vid);
+      });
+
+      this.sort();
+      return this;
+    }
+  }, {
+    key: "split",
+    value: function split() {
+      var _this5 = this;
+
+      var subGList = [];
+
+      var leftVids = _toConsumableArray(this.getVids());
+
+      var _loop = function _loop() {
+        var curVList = [];
+        var stack = [];
+        stack.push(leftVids.shift());
+
+        while (stack.length) {
+          var curV = stack.pop();
+          curVList.push(curV);
+
+          _toConsumableArray(_this5.getNeiByV(curV)).forEach(function (neiV) {
+            if (leftVids.includes(neiV)) {
+              leftVids.splice(leftVids.indexOf(neiV), 1);
+              stack.push(neiV);
+            }
+          });
+        }
+
+        subGList.push(_this5.subG(curVList));
+      };
+
+      while (leftVids.length) {
+        _loop();
+      }
+
+      return subGList;
+    }
+  }, {
+    key: "getCutVids",
+    value: function getCutVids() {
+      var parent = {};
+      var isCutVids = {};
+      var processed = {};
+      var discTime = {};
+      var minDTime = {};
+
+      var vids = _toConsumableArray(this.getVids());
+
+      vids.forEach(function (key) {
+        parent[key] = -1;
+        isCutVids[key] = 0;
+        processed[key] = 0;
+        discTime[key] = -1;
+        minDTime[key] = 0;
+      });
+      var self = this;
+
+      var _ap = function _ap(vid) {
+        chai.assert(self.hasV(vid));
+        chai.assert.isNumber(_ap.time);
+        var children = 0;
+        processed[vid] = 1;
+        discTime[vid] = _ap.time;
+        minDTime[vid] = _ap.time;
+        _ap.time += 1;
+
+        _toConsumableArray(self.getNeiByV(vid)).forEach(function (neiVid) {
+          if (!processed[neiVid]) {
+            children += 1;
+            parent[neiVid] = vid;
+
+            _ap(neiVid);
+
+            minDTime[vid] = Math.min(minDTime[neiVid], minDTime[vid]);
+
+            if (parent[vid] === -1 && children > 1) {
+              isCutVids[vid] = 1;
+            }
+
+            if (parent[vid] !== -1 && discTime[vid] <= minDTime[neiVid]) {
+              isCutVids[vid] = 1;
+            }
+          } else if (neiVid !== parent[vid]) {
+            minDTime[vid] = Math.min(discTime[neiVid], minDTime[vid]);
+          }
+        });
+      };
+
+      _ap.time = 0;
+      vids.forEach(function (vid) {
+        if (!processed[vid]) {
+          _ap(vid);
+        }
+      });
+      var res = Object.keys(isCutVids).filter(function (vid) {
+        return isCutVids[vid] === 1;
+      });
+      return new Set(res);
+    }
+  }, {
     key: "toString",
     value: function toString() {
       var out = "";
       minDash.forEach(this._dict, function (entry, k) {
-        var values = entry.nei.join(", ");
-        return out += "".concat(k, " [").concat(entry.val, "pts]: ").concat(values, "\n");
+        var values = _toConsumableArray(entry.nei).join(", ");
+
+        return out += "".concat(k, " \t[").concat(entry.val, "pts]: \t").concat(values, "\n");
       });
       return out;
     }
@@ -392,7 +535,8 @@ var DivRstSet = /*#__PURE__*/function () {
   }, {
     key: "union",
     value: function union(other, k) {
-      chai.assert(other instanceof DivRstSet && minDash.isNumber(k));
+      chai.assert.isNumber(k);
+      chai.assert.instanceOf(other, DivRstSet);
       var unionSet = DivRstSet["new"]();
 
       for (var i = 1; i <= k; i++) {
@@ -495,15 +639,15 @@ var HeapE = /*#__PURE__*/function () {
   _createClass(HeapE, [{
     key: "addItmToSol",
     value: function addItmToSol(item, score, pos) {
-      chai.assert(minDash.isNumber(item));
-      chai.assert(minDash.isNumber(score));
+      chai.assert.isNumber(item);
+      chai.assert.isNumber(score);
 
       this._dict["sol"].push(item);
 
       this._dict["scr"] += score;
 
       if (pos !== undefined) {
-        chai.assert(minDash.isNumber(pos));
+        chai.assert.isNumber(pos);
         this._dict["pos"] = pos;
       }
 
@@ -518,7 +662,7 @@ var HeapE = /*#__PURE__*/function () {
     key: "setSol",
     value: function setSol(sol, scr) {
       minDash.ensureArray(sol);
-      chai.assert(minDash.isNumber(scr));
+      chai.assert.isNumber(scr);
       this._dict["sol"] = sol;
       this._dict["scr"] = scr;
       return this;
@@ -536,7 +680,7 @@ var HeapE = /*#__PURE__*/function () {
   }, {
     key: "setPos",
     value: function setPos(pos) {
-      chai.assert(minDash.isNumber(pos));
+      chai.assert.isNumber(pos);
       this._dict["pos"] = pos;
       return this;
     }
@@ -553,7 +697,7 @@ var HeapE = /*#__PURE__*/function () {
   }, {
     key: "setBnd",
     value: function setBnd(bnd) {
-      chai.assert(minDash.isNumber(bnd));
+      chai.assert.isNumber(bnd);
       this._dict["bnd"] = bnd;
       return this;
     }
@@ -713,7 +857,7 @@ function astar_search(graph, heap, divRet, k) {
     var e = HeapPop(heap, _eGt);
 
     for (var i = e.getPos() + 1; i < graph.len(); i++) {
-      if (graph.getNeiByPos(i).filter(function (value) {
+      if (_toConsumableArray(graph.getNeiByPos(i)).filter(function (value) {
         return e.getSol().includes(value);
       }).length == 0) {
         var newV = graph.getVidByPos(i);
@@ -745,7 +889,7 @@ function astar_bound(graph, e, k) {
   var i = e.getPos() + 1;
 
   while (solutionSize < k && i < graph.len()) {
-    if (graph.getNeiByPos(i).filter(function (value) {
+    if (_toConsumableArray(graph.getNeiByPos(i)).filter(function (value) {
       return e.getSol().includes(value);
     }).length === 0) {
       bound += graph.getValByPos(i);
@@ -756,6 +900,38 @@ function astar_bound(graph, e, k) {
   }
 
   return bound;
+}
+
+function div_cut(graph, k) {
+  chai.assert.isNumber(k);
+  chai.assert.instanceOf(graph, Graph);
+  var D = DivRstSet["new"]();
+  var curD;
+  var cutVids;
+  graph.split().forEach(function (subG) {
+    subG.compress();
+    cutVids = subG.getCutVids();
+
+    if (cutVids.size == 0) {
+      curD = div_astar(subG, k);
+    }
+
+    D = D.union(curD, k);
+  });
+  return D;
+}
+
+function div_dp(graph, k) {
+  chai.assert.isNumber(k);
+  chai.assert.instanceOf(graph, Graph);
+  var D = DivRstSet["new"]();
+  var curD;
+  graph.split().forEach(function (subG) {
+    subG.compress();
+    curD = div_astar(subG, k);
+    D = D.union(curD, k);
+  });
+  return D;
 }
 
 exports.DivRstSet = DivRstSet;
@@ -769,3 +945,5 @@ exports.Heapify = Heapify;
 exports.HeapifyFromBtm = HeapifyFromBtm;
 exports.HeapifyFromTop = HeapifyFromTop;
 exports.div_astar = div_astar;
+exports.div_cut = div_cut;
+exports.div_dp = div_dp;

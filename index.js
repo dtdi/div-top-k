@@ -472,6 +472,15 @@ var DivRstSet = /*#__PURE__*/function () {
       return this;
     }
   }, {
+    key: "getMaxKSet",
+    value: function getMaxKSet(k) {
+      if (this.hasK(k)) {
+        return this.getSet(k);
+      } else {
+        return this.getSet(Math.max.apply(Math, _toConsumableArray(Object.keys(this._dict))));
+      }
+    }
+  }, {
     key: "getSet",
     value: function getSet(k) {
       chai.assert(this.hasK(k));
